@@ -1,10 +1,15 @@
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css'
 import { useState } from 'react';
+// import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+// import { faSolid } from "@fortawesome/free-solid-svg-icons";
 
 function App() {
   const [json, setJson] = useState('');
   const [csv, setCsv] = useState('');
+  const [cols, setCols] = useState([]);
+  const [linhas, setLinhas] = useState([]);
+  const [showTable, setShowTable] = useState(false);
 
   async function clear() {
     setJson('');
@@ -54,8 +59,43 @@ function App() {
 
     // stringCsv.unshift(colunas.join(';') + '\r\n') // add header column
     setCsv(colunas.join(';') + '\r\n' + stringCsv);
+
+    setCols(colunas);
+    // console.log(cols)
+    var lin = stringCsv.split('\r\n');
+    var objs = [];
+    lin.forEach(item => {
+      objs.push(item.split(";"));
+    });
+    // console.log(objs);
+    setLinhas(objs);
+    // console.log(linhas);
   }
 
+  async function mudaTabela() {
+    var show = !showTable;
+    setShowTable(show);
+  }
+
+  async function downloadCsv() {
+    var csvFile = csv;
+    var blob = new Blob([csvFile], { type: 'text/csv;charset=utf-8;' });
+    if (navigator.msSaveBlob) { // IE 10+
+      navigator.msSaveBlob(blob, 'convert.csv');
+    } else {
+      var link = document.createElement("a");
+      if (link.download !== undefined) { // feature detection
+        // Browsers that support HTML5 download attribute
+        var url = URL.createObjectURL(blob);
+        link.setAttribute("href", url);
+        link.setAttribute("download", 'convert.csv');
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+    }
+  }
 
   return (
     <div className="App">
@@ -74,6 +114,11 @@ function App() {
             <br />
             <br />
             <button type="button" class="btn btn-secondary" onClick={clear}>Limpar</button>
+            <br />
+            <br />
+            <button type="button" class="btn btn-info" onClick={mudaTabela} >
+              Gerar Tabela
+            </button>
           </div>
 
           <div class="form-outline col-5">
@@ -83,6 +128,31 @@ function App() {
         </div>
 
       </form >
+
+      <br />
+      <br />
+      <br />
+      {showTable &&
+        <div className="Table">
+          <button type="button" class="btn btn-info" onClick={downloadCsv} >
+            {/* <FontAwesomeIcon icon={faSolid} /> */}
+            Donwload .csv
+          </button>
+          <table style={{ width: '100%' }}>
+            <tr>
+              {cols.map((coluna, index) => {
+                return <th key={index}>{coluna}</th>
+              })}
+            </tr>
+            {linhas.map((linha, index) => {
+              return <tr>
+                {linha.map((campo, index) => {
+                  return <td key={index}>{campo}</td>
+                })}
+              </tr>
+            })}
+          </table>
+        </div>}
     </div >
   );
 }
